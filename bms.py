@@ -65,7 +65,13 @@ if st.button("Analyse & Classify"):
         # Classification Report
         y_pred = clf.predict(X_test)
         st.text("Classification Report:")
-        st.text(classification_report(y_test, y_pred, target_names=["Normal", "Abnormal"]))
+        st.text(classification_report(
+            y_test,
+            y_pred,
+            labels=[0, 1],
+            target_names=["Normal", "Abnormal"],
+            zero_division=0
+        ))
 
         conn.close()
 
