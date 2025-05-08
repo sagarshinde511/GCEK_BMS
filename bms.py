@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
-st.title("Battery Voltage Discharge Analysis with Machine Learning")
+st.title("Battery Voltage Discharge Analysis with Classification")
 
 if st.button("Analyse & Classify"):
 
@@ -31,34 +31,34 @@ if st.button("Analyse & Classify"):
         ORDER BY DATE(dateTime);
         """
 
+        # Read data into DataFrame
         df = pd.read_sql(query, conn)
 
-        # Simulated labeling logic (you can replace this with real labels)
-        # Let's assume discharge > 0.5 is 'abnormal'
+        # 🚨 Label abnormal discharge (> 0.5V drop)
         df['label'] = df['daily_discharge'].apply(lambda x: 1 if x > 0.5 else 0)
 
-        # Features and target
+        # Split features and target
         X = df[['max_voltage', 'min_voltage', 'daily_discharge']]
         y = df['label']
 
-        # Split data
+        # Train-test split
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        # Train classifier
+        # Train Random Forest Classifier
         clf = RandomForestClassifier(n_estimators=100, random_state=42)
         clf.fit(X_train, y_train)
 
-        # Predict
+        # Predictions
         df['prediction'] = clf.predict(X)
 
-        # Display data and predictions
+        # Display results
         st.success("Data Retrieved and Classified Successfully!")
         st.dataframe(df)
 
-        # Display chart
+        # Show chart
         st.line_chart(df.set_index('date')['daily_discharge'])
 
-        # Metrics
+        # Show classification metrics
         y_pred = clf.predict(X_test)
         st.text("Classification Report:")
         st.text(classification_report(y_test, y_pred))
@@ -67,4 +67,5 @@ if st.button("Analyse & Classify"):
 
     except Exception as e:
         st.error(f"Error: {e}")
+
 
