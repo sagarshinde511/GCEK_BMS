@@ -34,10 +34,10 @@ if st.button("Analyse & Classify"):
         # Read data into DataFrame
         df = pd.read_sql(query, conn)
 
-        # 🚨 Label abnormal discharge (> 0.5V drop)
+        # Label abnormal discharge (> 0.5V drop)
         df['label'] = df['daily_discharge'].apply(lambda x: 1 if x > 0.5 else 0)
 
-        # Split features and target
+        # Features and target
         X = df[['max_voltage', 'min_voltage', 'daily_discharge']]
         y = df['label']
 
@@ -48,24 +48,26 @@ if st.button("Analyse & Classify"):
         clf = RandomForestClassifier(n_estimators=100, random_state=42)
         clf.fit(X_train, y_train)
 
-        # Predictions
+        # Add predictions
         df['prediction'] = clf.predict(X)
 
-        # Display results
+        # ✅ Map numerical labels to text
+        df['label'] = df['label'].map({0: 'Normal', 1: 'Abnormal'})
+        df['prediction'] = df['prediction'].map({0: 'Normal', 1: 'Abnormal'})
+
+        # Display DataFrame
         st.success("Data Retrieved and Classified Successfully!")
         st.dataframe(df)
 
-        # Show chart
+        # Chart
         st.line_chart(df.set_index('date')['daily_discharge'])
 
-        # Show classification metrics
+        # Classification Report
         y_pred = clf.predict(X_test)
         st.text("Classification Report:")
-        st.text(classification_report(y_test, y_pred))
+        st.text(classification_report(y_test, y_pred, target_names=["Normal", "Abnormal"]))
 
         conn.close()
 
     except Exception as e:
         st.error(f"Error: {e}")
-
-
