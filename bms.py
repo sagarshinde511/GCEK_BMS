@@ -1,11 +1,13 @@
 import streamlit as st
 import pandas as pd
 import mysql.connector
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
 
-st.title("Battery Voltage Discharge Analysis")
+st.title("Battery Voltage Discharge Analysis with Machine Learning")
 
-# Button to trigger analysis
-if st.button("Analyse Data"):
+if st.button("Analyse & Classify"):
 
     try:
         # Connect to MySQL
@@ -29,18 +31,40 @@ if st.button("Analyse Data"):
         ORDER BY DATE(dateTime);
         """
 
-        # Read data into DataFrame
         df = pd.read_sql(query, conn)
 
-        # Display the results
-        st.success("Data Retrieved Successfully!")
+        # Simulated labeling logic (you can replace this with real labels)
+        # Let's assume discharge > 0.5 is 'abnormal'
+        df['label'] = df['daily_discharge'].apply(lambda x: 1 if x > 0.5 else 0)
+
+        # Features and target
+        X = df[['max_voltage', 'min_voltage', 'daily_discharge']]
+        y = df['label']
+
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        # Train classifier
+        clf = RandomForestClassifier(n_estimators=100, random_state=42)
+        clf.fit(X_train, y_train)
+
+        # Predict
+        df['prediction'] = clf.predict(X)
+
+        # Display data and predictions
+        st.success("Data Retrieved and Classified Successfully!")
         st.dataframe(df)
 
-        # Optional: Add plot
+        # Display chart
         st.line_chart(df.set_index('date')['daily_discharge'])
 
-        # Close connection
+        # Metrics
+        y_pred = clf.predict(X_test)
+        st.text("Classification Report:")
+        st.text(classification_report(y_test, y_pred))
+
         conn.close()
 
     except Exception as e:
         st.error(f"Error: {e}")
+
